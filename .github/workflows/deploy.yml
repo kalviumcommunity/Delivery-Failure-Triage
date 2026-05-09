@@ -1,0 +1,37 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    # FAILURE 1: Triggering on 'master' but the repo uses 'main'
+    branches: [ "master" ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Dependencies
+        # FAILURE 2: Working directory is 'backend' instead of 'server'
+        working-directory: backend
+        run: npm install
+
+      - name: Start Application
+        # FAILURE 4: Starting before building. Build is required for static files.
+        run: npm start
+        env:
+          DB_URL: ${{ secrets.DB_URL }}
+          PORT: 3000
+          # FAILURE 3: Missing JWT_SECRET environment variable
+
+      - name: Build Production Bundle
+        # FAILURE 2 (Repeated): Working directory is 'backend'
+        working-directory: backend
+        run: npm run build
